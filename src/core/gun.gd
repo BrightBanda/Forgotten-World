@@ -7,6 +7,7 @@ var range: float
 
 @onready var raycast: RayCast3D = $ShootRaycast
 @onready var muzzle: Marker3D = $Muzzle
+@onready var muzzle_flash_mesh: MeshInstance3D = $Muzzle/MuzzleFlashMesh
 
 var can_shoot: bool = true
 
@@ -38,3 +39,17 @@ func shoot(aim_direction: Vector3) -> bool:
 	await get_tree().create_timer(fire_rate).timeout
 	can_shoot = true
 	return true
+	
+func trigger_muzzle_flash():
+	var material = muzzle_flash_mesh.get_active_material(0) as ShaderMaterial
+	if material:
+		material.set_shader_parameter("seed", randf())
+		material.set_shader_parameter("flash_intensity", 5.0)
+		# Reset any running tweens on this object to prevent overlap glitching
+		var tween = create_tween()
+		
+		# Instantly spike the flash intensity to blinding levels
+		material.set_shader_parameter("flash_intensity", 10.0)
+		
+		# Smoothly drop it back down to absolute 0 over 0.05 seconds
+		tween.tween_property(material, "shader_parameter/flash_intensity", 0.0, 0.05)

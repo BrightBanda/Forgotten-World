@@ -85,3 +85,4 @@ func shoot():
 	var muzzle_pos = current_gun.muzzle.global_position
 	var shoot_direction = (aim_point - muzzle_pos).normalized()
 	current_gun.shoot(shoot_direction)
+	current_gun.trigger_muzzle_flash()

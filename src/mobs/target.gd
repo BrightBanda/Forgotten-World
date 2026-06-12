@@ -1,13 +1,13 @@
 extends StaticBody3D
 
-@export var max_health: float = 100.0
+@export var data:EnemyResource
 var current_health: float
 
 @onready var mesh_instance: MeshInstance3D = $MeshInstance3D
 var flash_tween: Tween 
 
 func _ready() -> void:
-	current_health = max_health
+	current_health = data.max_health
 
 func take_damage(amount: float) -> void:
 	current_health -= amount
