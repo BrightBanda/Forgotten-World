@@ -22,6 +22,8 @@ extends CharacterBody3D
 @onready var current_gun:=$GunHolder/Gun
 var is_aiming:bool = false
 
+@onready var hud:CanvasLayer = $"../HUD"
+
 
 func _ready():
 	Input.mouse_mode =Input.MOUSE_MODE_CAPTURED
@@ -29,9 +31,17 @@ func _ready():
 	camera.global_transform = camera_target.global_transform
 	camera.fov = default_fov
 	aim_raycast.target_position = Vector3(0,0,-1000)
+	if current_gun:
+		current_gun.ammo_changed.connect(hud.on_ammo_changed)
+		current_gun.reload_started.connect(hud.on_reload_started)
+		current_gun.reload_finished.connect(hud.on_reload_finished)
+		
+		hud.on_ammo_changed(current_gun.current_clip,current_gun.reserve_ammo)
 
 func _process(delta: float) -> void:
-	# 3. Handle Right-Click Input Check
+	if Input.is_action_pressed("shoot"):
+		shoot()
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	is_aiming = Input.is_action_pressed("zoom") 
 	
 	# 4. Smoothly blend the Camera Rig Position (Offset) and FOV
@@ -59,11 +69,10 @@ func _process(delta: float) -> void:
 	camera.global_transform.basis = Basis(blended_quat)
 	
 func _input(event: InputEvent) -> void:
-	if Input.is_action_pressed("shoot"):
-		shoot()
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if Input.is_action_just_pressed("pause"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if Input.is_action_just_pressed("reload"):
+		current_gun.start_reload()
 		
 func _unhandled_input(event):
 	if event is InputEventMouseMotion:
@@ -80,9 +89,8 @@ func shoot():
 		aim_point = aim_raycast.get_collision_point()
 	else:
 		var cam_dir = -camera.global_basis.z
-		aim_point = camera.global_position + cam_dir * current_gun.range
+		aim_point = camera.global_position + cam_dir * current_gun.fire_range
 		
 	var muzzle_pos = current_gun.muzzle.global_position
 	var shoot_direction = (aim_point - muzzle_pos).normalized()
 	current_gun.shoot(shoot_direction)
-	current_gun.trigger_muzzle_flash()
